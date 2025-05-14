@@ -1,0 +1,130 @@
+use zenClassDB
+
+db.users.insertMany([
+  { _id: 1, name: "Alice", email: "alice@example.com", mentor_id: 101 },
+  { _id: 2, name: "Bob", email: "bob@example.com", mentor_id: 101 },
+  { _id: 3, name: "Charlie", email: "charlie@example.com", mentor_id: 102 }
+])
+
+db.codekata.insertMany([
+  { user_id: 1, problems_solved: 100 },
+  { user_id: 2, problems_solved: 150 },
+  { user_id: 3, problems_solved: 200 }
+])
+
+db.attendance.insertMany([
+  { user_id: 1, date: new Date("2020-10-16"), status: "absent" },
+  { user_id: 2, date: new Date("2020-10-18"), status: "present" },
+  { user_id: 3, date: new Date("2020-10-20"), status: "absent" }
+])
+
+db.topics.insertMany([
+  { topic: "MongoDB", date: new Date("2020-10-18") },
+  { topic: "React", date: new Date("2020-10-22") },
+  { topic: "Node.js", date: new Date("2020-11-01") }
+])
+
+db.tasks.insertMany([
+  { user_id: 1, topic: "MongoDB", date: new Date("2020-10-18"), submitted: false },
+  { user_id: 2, topic: "React", date: new Date("2020-10-22"), submitted: true },
+  { user_id: 3, topic: "Node.js", date: new Date("2020-10-20"), submitted: false }
+])
+
+db.company_drives.insertMany([
+  { company: "Google", drive_date: new Date("2020-10-20"), attended_users: [1] },
+  { company: "Facebook", drive_date: new Date("2020-10-30"), attended_users: [2] },
+  { company: "Amazon", drive_date: new Date("2020-11-05"), attended_users: [3] }
+])
+
+db.mentors.insertMany([
+  { _id: 101, name: "Mentor A", mentees: [1, 2] },
+  { _id: 102, name: "Mentor B", mentees: [3] }
+])
+
+1. Find all the topics and tasks which are thought in the month of October.
+
+db.topics.find({
+  date: {
+    $gte: ISODate("2020-10-01"),
+    $lte: ISODate("2020-10-31")
+  }
+})
+
+// Tasks in October
+db.tasks.find({
+  date: {
+    $gte: ISODate("2020-10-01"),
+    $lte: ISODate("2020-10-31")
+  }
+})
+
+2. Find all the company drives which appeared between 15 oct-2020 and 31-oct-2020.
+
+db.company_drives.find({
+  drive_date: {
+    $gte: ISODate("2020-10-15"),
+    $lte: ISODate("2020-10-31")
+  }
+})
+ 
+3. Find all the company drives and students who are appeared for the placement.
+
+// Find drives
+let drives = db.company_drives.find().toArray();
+
+// For each drive, find students manually
+drives.forEach(drive => {
+  print(`Company: ${drive.company}`);
+  drive.attended_users.forEach(userId => {
+    let student = db.users.findOne({ _id: userId });
+    print(` - Student: ${student.name}`);
+  });
+});
+
+4. Find the number of problems solved by the user in codekata.
+
+db.codekata.find().forEach(doc => {
+   let user = db.users.findOne({ _id: doc.user_id });
+  print(`${user.name} solved ${doc.problems_solved} problems`);
+});
+
+5. Find all the mentors with who has the mentee's count more than 15.
+
+db.mentors.find({ "mentees.15": { $exists: true } })
+
+6. Find the number of users who are absent and task is not submitted  between 15 oct-2020 and 31-oct-2020.
+
+Attendance document :
+
+{
+  user_id: 101,
+  date: ISODate("2020-10-20"),
+  status: "absent"
+}
+ 
+Tasks document :
+
+{
+  user_id: 101,
+  date: ISODate("2020-10-20"),
+  submitted: false
+}
+
+Step 1: Find users who were absent between 15–31 Oct:
+
+db.attendance.find({
+  date: { $gte: ISODate("2020-10-15"), $lte: ISODate("2020-10-31") },
+  status: "absent"
+})
+  
+Step 2: Find users who did not submit the task in the same date range:
+
+db.tasks.find({
+  date: { $gte: ISODate("2020-10-15"), $lte: ISODate("2020-10-31") },
+  submitted: false
+})
+
+
+
+
+
